@@ -4,9 +4,88 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Image Uploader</title>
-  <link rel="stylesheet" href="style.css" />
   <style>
-   
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f5f7fa;
+      margin: 0;
+      padding: 2rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .container {
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 500px;
+      text-align: center;
+    }
+
+    h2 {
+      margin-bottom: 1rem;
+      color: #333;
+    }
+
+    .drop-area {
+      border: 2px dashed #007BFF;
+      border-radius: 10px;
+      padding: 2rem;
+      background-color: #f0f8ff;
+      transition: background 0.3s ease;
+      cursor: pointer;
+    }
+
+    .drop-area.dragover {
+      background-color: #e6f0ff;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    .progress-bar {
+      height: 8px;
+      background-color: #007BFF;
+      width: 0%;
+      border-radius: 4px;
+      margin-top: 1rem;
+      transition: width 0.3s ease;
+    }
+
+    .url-display {
+      margin-top: 1.5rem;
+      word-break: break-all;
+    }
+
+    .url-display a {
+      color: #007BFF;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .button {
+      margin-top: 1rem;
+      background-color: #007BFF;
+      color: white;
+      padding: 0.7rem 1.5rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .button:hover {
+      background-color: #0056b3;
+    }
   </style>
 </head>
 <body>
@@ -23,7 +102,114 @@
     <div class="url-display" id="url-display"></div>
   </div>
 
-  
-  <script src="index.js"></script>
+  <script>
+    const dropArea = document.getElementById('drop-area');
+    const fileInput = document.getElementById('file-input');
+    const progressBar = document.getElementById('progress-bar');
+    const urlDisplay = document.getElementById('url-display');
+
+    // Allow drag-and-drop
+    dropArea.addEventListener('click', () => fileInput.click());
+
+    dropArea.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropArea.classList.add('dragover');
+    });
+
+    dropArea.addEventListener('dragleave', () => {
+      dropArea.classList.remove('dragover');
+    });
+
+    dropArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropArea.classList.remove('dragover');
+      const files = e.dataTransfer.files;
+      if (files.length > 0) {
+        uploadFile(files[0]);
+      }
+    });
+
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files.length > 0) {
+        uploadFile(fileInput.files[0]);
+      }
+    });
+
+    function uploadFile(file) {
+        console.log(file)
+    //   if (!file.type.startsWith('image/')) {
+    //     alert('Please upload a valid image file.');
+    //     return;
+    //   }
+
+      const formData = new FormData();
+      formData.append('files', file); 
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', 'https://server.cgmpublications.com/api/v1/aws-media-file/create-media-file');
+
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          const percent = (e.loaded / e.total) * 100;
+          progressBar.style.width = percent + '%';
+        }
+      };
+
+    xhr.onload = () => {
+  if (xhr.status === 200) {
+    const res = JSON.parse(xhr.responseText);
+    console.log(res);
+
+    const urls = Array.isArray(res.data?.url) ? res.data.url : [res.data?.url];
+    const fileTypes = res.data?.fileType || [];
+
+    if (urls.length > 0 && fileTypes.length > 0) {
+      const currentType = fileTypes[0];
+      const currentUrl = urls[0];
+
+      if (currentType.startsWith('image/')) {
+        urlDisplay.innerHTML = `
+          <p>Image uploaded:</p>
+          <img width="100px" height="auto" src="${currentUrl}" />
+        `;
+      } else if (currentType.startsWith('audio/')) {
+        urlDisplay.innerHTML = `
+          <p>Audio uploaded:</p>
+          <audio controls>
+            <source src="${currentUrl}" type="${currentType}">
+            Your browser does not support the audio element.
+          </audio>
+        `;
+      }else if (currentType.startsWith('video/')) {
+        urlDisplay.innerHTML = `
+          <p>Video uploaded:</p>
+          <video width="320" height="240" controls>
+            <source src="${currentUrl}" type="${currentType}">
+            Your browser does not support the video tag.
+          </video>
+        `} else {
+        urlDisplay.innerHTML = `
+          <p>File uploaded:</p>
+          <a href="${currentUrl}" target="_blank">${currentUrl}</a>
+        `;
+      }
+    } else {
+      urlDisplay.innerHTML = `<p style="color:red;">Upload succeeded but no URL returned.</p>`;
+    }
+  } else {
+    console.log(JSON.parse(xhr.response));
+    urlDisplay.innerHTML = `<p style="color:red;">Upload failed: ${xhr.statusText}</p>`;
+  }
+
+  progressBar.style.width = '0%';
+};
+      xhr.onerror = () => {
+        urlDisplay.innerHTML = `<p style="color:red;">An error occurred during the upload.</p>`;
+        progressBar.style.width = '0%';
+      };
+
+      xhr.send(formData);
+    }
+  </script>
 </body>
 </html>
