@@ -98,6 +98,7 @@
     </div>
 
     <div class="progress-bar" id="progress-bar"></div>
+    <div id="percent-text" class="percent-text">0%</div>
 
     <div class="url-display" id="url-display"></div>
   </div>
@@ -107,6 +108,7 @@
     const fileInput = document.getElementById('file-input');
     const progressBar = document.getElementById('progress-bar');
     const urlDisplay = document.getElementById('url-display');
+    const percentText = document.getElementById('percent-text');
 
     // Allow drag-and-drop
     dropArea.addEventListener('click', () => fileInput.click());
@@ -152,6 +154,7 @@
         if (e.lengthComputable) {
           const percent = (e.loaded / e.total) * 100;
           progressBar.style.width = percent + '%';
+          percentText.textContent = Math.round(percent) + '%';
         }
       };
 
