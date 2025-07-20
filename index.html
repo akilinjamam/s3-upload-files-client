@@ -98,7 +98,7 @@
     </div>
 
     <div class="progress-bar" id="progress-bar"></div>
-    <div id="percent-text" class="percent-text">0%</div>
+    <div id="percent-text" class="percent-text"></div>
 
     <div class="url-display" id="url-display"></div>
   </div>
@@ -127,25 +127,26 @@
       dropArea.classList.remove('dragover');
       const files = e.dataTransfer.files;
       if (files.length > 0) {
-        uploadFile(files[0]);
+        console.log(files)
+        uploadFile(files);
       }
     });
 
     fileInput.addEventListener('change', () => {
       if (fileInput.files.length > 0) {
-        uploadFile(fileInput.files[0]);
+        uploadFile(fileInput.files);
       }
     });
 
-    function uploadFile(file) {
-        console.log(file)
-    //   if (!file.type.startsWith('image/')) {
-    //     alert('Please upload a valid image file.');
-    //     return;
-    //   }
+    function uploadFile(files) {
+        console.log(files)
+        
+        const formData = new FormData();
+      
+        for(file of files){
+          formData.append('files', file); 
+        }
 
-      const formData = new FormData();
-      formData.append('files', file); 
 
       const xhr = new XMLHttpRequest();
       xhr.open('POST', 'https://server.cgmpublications.com/api/v1/aws-media-file/create-media-file');
