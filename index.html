@@ -150,7 +150,7 @@
 
       const xhr = new XMLHttpRequest();
       xhr.open('POST', 'https://server.cgmpublications.com/api/v1/aws-media-file/direct-upload');
-
+      console.log(xhr)
       xhr.upload.onprogress = (e) => {
         if (e.lengthComputable) {
           const percent = (e.loaded / e.total) * 100;
@@ -159,7 +159,11 @@
         }
       };
 
-    xhr.onload = () => {
+      xhr.upload.onloadend = () => {
+      percentText.textContent += ' - Completed';
+      console.log('Upload finished');
+};
+      xhr.onload = () => {
   if (xhr.status === 200) {
     const res = JSON.parse(xhr.responseText);
     console.log(res);
